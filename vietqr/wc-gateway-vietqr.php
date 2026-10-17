@@ -8,7 +8,7 @@
  * Author URI: https://casso.vn
  * Text Domain: vietqr
  * Domain Path: /languages
- * Version: 3.8.0
+ * Version: 4.0.3
  * Requires at least: 6.2
  * Requires PHP: 7.4
  * Tested up to: 7.1
@@ -21,21 +21,26 @@
 
 
 defined('ABSPATH') or exit;
-define( 'WC_GATEWAY_VIETQR_VERSION', '3.8.0' ); // phải trùng Version ở header, CI kiểm tra khi deploy
+define( 'WC_GATEWAY_VIETQR_VERSION', '4.0.3' ); // phải trùng Version ở header, CI kiểm tra khi deploy
 define( 'WC_GATEWAY_VIETQR_URL', untrailingslashit( plugins_url( basename( plugin_dir_path( __FILE__ ) ), basename( __FILE__ ) ) ) );
 define( 'WC_GATEWAY_VIETQR_PATH', untrailingslashit( plugin_dir_path( __FILE__ ) ) );
-
-// Make sure WooCommerce is active
-if (!in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')))) {
-    return;
-}
 
 //load plugin code
 add_action('plugins_loaded', 'vietqr_gateway_init', 11);
 
 function vietqr_gateway_init()
 {
+    // Kiểm tra theo class thay vì option active_plugins để chạy được cả khi WooCommerce kích hoạt cho toàn network (multisite).
+    if (!class_exists('WC_Payment_Gateway')) {
+        add_action('admin_notices', 'vietqr_woocommerce_missing_notice');
+        return;
+    }
     require_once __DIR__ . '/classes/class-wc-gateway-vietqr.php';
+}
+
+function vietqr_woocommerce_missing_notice()
+{
+    echo '<div class="notice notice-error"><p>' . esc_html__('VietQR requires WooCommerce to be installed and active.', 'vietqr') . '</p></div>';
 }
 
 // Khai báo tương thích HPOS và Checkout Block
@@ -45,6 +50,16 @@ add_action('before_woocommerce_init', function () {
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('cart_checkout_blocks', __FILE__, true);
     }
 });
+
+// QR ở trang Tài khoản → Xem đơn hàng
+add_action('woocommerce_view_order', 'vietqr_view_order_page', 5);
+function vietqr_view_order_page($order_id)
+{
+    $gateways = WC()->payment_gateways()->payment_gateways();
+    if (isset($gateways['vietqr'])) {
+        $gateways['vietqr']->view_order_page($order_id);
+    }
+}
 
 //register vietqr gateway 
 add_filter('woocommerce_payment_gateways', 'vietqr_add_gateways');

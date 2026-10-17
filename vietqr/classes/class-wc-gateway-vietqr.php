@@ -19,16 +19,16 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 
 	public $instructions;
 	public $prefix;
-	public $developer_id;
 	public $account_details;
 
 	static private $URL_BANKS_LIST = "https://api.vietqr.io/v2/banks";
+	static private $URL_DEEPLINK_APPS = "https://api.vietqr.io/v2/%s-app-deeplinks";
 
-	//cache danh sách ngân hàng: transient 1h, bản tốt gần nhất lưu vĩnh viễn, cuối cùng là file đóng gói sẵn.
+	//cache dữ liệu từ API: transient, bản tốt gần nhất lưu vĩnh viễn ({key}_last_good), cuối cùng là file đóng gói sẵn.
 	const BANKS_TRANSIENT = 'vietqr_banks';
-	const BANKS_LAST_GOOD_OPTION = 'vietqr_banks_last_good';
 	const BANKS_CACHE_LIFE = HOUR_IN_SECONDS;
-	const BANKS_RETRY_AFTER = 5 * MINUTE_IN_SECONDS;
+	const DEEPLINK_APPS_CACHE_LIFE = 12 * HOUR_IN_SECONDS;
+	const RETRY_AFTER = 5 * MINUTE_IN_SECONDS;
 
 	/**
 	 * Constructor for the gateway.
@@ -51,7 +51,6 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 
 		$this->instructions = $this->get_option('instructions');
 		$this->prefix = $this->get_option('prefix');
-		$this->developer_id = $this->get_option('developer_id');
 		// VietQR account fields shown on the thanks page and in emails.
 		$this->account_details = get_option(
 			'woocommerce_vietqr_accounts',
@@ -79,62 +78,98 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 	 */
 	public static function get_banks()
 	{
-		$banks = get_transient(self::BANKS_TRANSIENT);
-		if (self::is_valid_banks($banks)) {
-			return $banks;
+		return self::cached_remote_json(
+			self::BANKS_TRANSIENT,
+			self::$URL_BANKS_LIST,
+			self::BANKS_CACHE_LIFE,
+			function ($data) {
+				return is_array($data) && !empty($data['data']) && is_array($data['data']);
+			},
+			function () {
+				$banks = self::read_bundled_json('banks.json');
+				return is_array($banks) && !empty($banks['data']) ? $banks : array('data' => array());
+			},
+			array(
+				'x-api-key'   => 'we-l0v3-v1et-qr',
+				'x-client-id' => get_site_url(),
+			)
+		);
+	}
+
+	/**
+	 * Danh sách app ngân hàng hỗ trợ deeplink (dl.vietqr.io) cho một nền tảng.
+	 *
+	 * @param string $platform android | ios.
+	 * @return array Mỗi app: appId, appName, appLogo, autofill, monthlyInstall...
+	 */
+	public static function get_deeplink_apps($platform)
+	{
+		$platform = 'ios' === $platform ? 'ios' : 'android';
+		$data = self::cached_remote_json(
+			'vietqr_deeplink_apps_' . $platform,
+			sprintf(self::$URL_DEEPLINK_APPS, $platform),
+			self::DEEPLINK_APPS_CACHE_LIFE,
+			function ($data) {
+				return is_array($data) && !empty($data['apps']) && is_array($data['apps']);
+			},
+			function () use ($platform) {
+				$apps = self::read_bundled_json('deeplink-apps.json');
+				return array('apps' => isset($apps[$platform]) && is_array($apps[$platform]) ? $apps[$platform] : array());
+			}
+		);
+		return $data['apps'];
+	}
+
+	/**
+	 * @param string   $key       Tên transient; bản tốt gần nhất lưu ở option {$key}_last_good.
+	 * @param string   $url       API.
+	 * @param int      $ttl       Thời gian cache khi API trả về hợp lệ.
+	 * @param callable $is_valid  Kiểm tra dữ liệu.
+	 * @param callable $fallback  Dữ liệu đóng gói sẵn khi chưa từng gọi API thành công.
+	 * @param array    $headers   Header gửi kèm.
+	 */
+	private static function cached_remote_json($key, $url, $ttl, $is_valid, $fallback, $headers = array())
+	{
+		$data = get_transient($key);
+		if ($is_valid($data)) {
+			return $data;
 		}
 
-		$banks = self::fetch_banks();
-		if (self::is_valid_banks($banks)) {
-			set_transient(self::BANKS_TRANSIENT, $banks, self::BANKS_CACHE_LIFE);
-			update_option(self::BANKS_LAST_GOOD_OPTION, $banks, false);
-			self::cleanup_legacy_banks_cache();
-			return $banks;
+		$response = wp_remote_get($url, array('timeout' => 3, 'headers' => $headers));
+		$data = (!is_wp_error($response) && 200 === wp_remote_retrieve_response_code($response))
+			? json_decode(wp_remote_retrieve_body($response), true)
+			: null;
+		if ($is_valid($data)) {
+			set_transient($key, $data, $ttl);
+			update_option($key . '_last_good', $data, false);
+			if (self::BANKS_TRANSIENT === $key) {
+				self::cleanup_legacy_banks_cache();
+			}
+			return $data;
 		}
 
 		//API lỗi: dùng tạm bản cũ, thử lại sau vài phút thay vì gọi API ở mọi request.
-		$banks = get_option(self::BANKS_LAST_GOOD_OPTION);
-		if (!self::is_valid_banks($banks)) {
-			$banks = self::bundled_banks();
+		$data = get_option($key . '_last_good');
+		if (!$is_valid($data)) {
+			$data = $fallback();
 		}
-		set_transient(self::BANKS_TRANSIENT, $banks, self::BANKS_RETRY_AFTER);
-		return $banks;
+		set_transient($key, $data, self::RETRY_AFTER);
+		return $data;
 	}
 
-	private static function is_valid_banks($banks)
+	private static function read_bundled_json($filename)
 	{
-		return is_array($banks) && !empty($banks['data']) && is_array($banks['data']);
-	}
-
-	private static function fetch_banks()
-	{
-		$response = wp_remote_get(self::$URL_BANKS_LIST, array(
-			'timeout' => 3,
-			'headers' => array(
-				'x-api-key' => 'we-l0v3-v1et-qr',
-				"x-client-id" => get_site_url(),
-			),
-		));
-		if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
-			return null;
-		}
-		return json_decode(wp_remote_retrieve_body($response), true);
-	}
-
-	private static function bundled_banks()
-	{
-		$file = dirname(__DIR__) . '/assets/data/banks.json';
+		$file = dirname(__DIR__) . '/assets/data/' . $filename;
 		$json = is_readable($file) ? file_get_contents($file) : false;
-		$banks = $json ? json_decode($json, true) : null;
-		return self::is_valid_banks($banks) ? $banks : array('data' => array());
+		return $json ? json_decode($json, true) : null;
 	}
 
 	//bản cũ lưu danh sách ngân hàng trong settings của gateway (autoload), xóa đi cho nhẹ.
 	private static function cleanup_legacy_banks_cache()
 	{
 		$settings = get_option('woocommerce_vietqr_settings');
-		if (is_array($settings) && (isset($settings['vietqr_banks']) || isset($settings['vietqr_banks_expired']))) {
-			unset($settings['vietqr_banks'], $settings['vietqr_banks_expired']);
+		if (is_array($settings) && (isset($settings['vietqr_banks']) || isset($settings['vietqr_banks_expired']) || isset($settings['developer_id']))) {
+			unset($settings['vietqr_banks'], $settings['vietqr_banks_expired'], $settings['developer_id']);
 			update_option('woocommerce_vietqr_settings', $settings);
 		}
 	}
@@ -182,6 +217,14 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 			'account_details' => array(
 				'type' => 'account_details',
 			),
+			'deeplink'        => array(
+				'title'       => __('Bank app buttons', 'vietqr'),
+				'type'        => 'checkbox',
+				'label'       => __('Show "Open banking app" buttons on mobile (VietQR deeplink)', 'vietqr'),
+				'description' => __('Customers on a phone can open their banking app with the account, amount and transfer memo already filled in.', 'vietqr'),
+				'default'     => 'yes',
+				'desc_tip'    => true,
+			),
 			'prefix'           => array(
 				'title'       => __('Prefix', 'vietqr'),
 				'type'        => 'text',
@@ -203,14 +246,12 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 
 		ob_start();
 
-		wp_enqueue_script('vietqr-select2-script', plugins_url('../assets/js/select2.min.js', __FILE__), array('jquery'), '4.0.3', false);
-		wp_enqueue_style('vietqr-select2-styles', plugins_url('../assets/css/select2.min.css', __FILE__), array(), '4.0.3');
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- chỉ quyết định hiện ô Developer ID
-		$is_claim_show = isset($_GET['claim']);
+		// selectWoo (bản select2 của WooCommerce), CSS có sẵn trong woocommerce_admin_styles.
+		wp_enqueue_script('selectWoo');
 ?>
 		<script>
 			jQuery(document).ready(function() {
-				jQuery("#vietqr_bank_selector2").select2({
+				jQuery("#vietqr_bank_selector2").selectWoo({
 					templateResult: formatOptions
 				});
 			});
@@ -263,15 +304,6 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 			</td>
 			</td>
 		</tr>
-		<tr valign="top" style="<?php if (!$is_claim_show) echo "display: none;"  ?>">
-			<th scope="row" class="titledesc"><?php esc_html_e('Developer ID', 'vietqr'); ?>:</th>
-			<td class="forminp" id="vietqr_accounts">
-			
-				<input type="text" value="<?php echo esc_attr($this->developer_id) ?>" name="vietqr_developer_id[0]" style="max-width: 150px;"/>
-				</br>
-				<label for="bank_transfer" style="font-size: 11px; font-style: oblique;margin-top: 10px;"><?php esc_html_e('We will review and send you a gift via MoMo if you are eligible', 'vietqr'); ?></label>
-			</td>
-		</tr>
 <?php
 		return ob_get_clean();
 	}
@@ -307,43 +339,7 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 		$prefix = isset($_POST['woocommerce_vietqr_prefix']) ? sanitize_text_field(wp_unslash($_POST['woocommerce_vietqr_prefix'])) : '';
 		$this->update_option('prefix', $this->clean_prefix($prefix));
 
-		// Cập nhật developer_id
-		if (isset($_POST['vietqr_developer_id'])) {
-			$developer_id = map_deep(wp_unslash($_POST['vietqr_developer_id']), 'sanitize_text_field');
-			$developer_id = $developer_id[0] ?? '';
-			$changed = $developer_id !== (string) $this->developer_id;
-			$this->update_option('developer_id', $developer_id);
-			//chỉ gửi sang devgioi khi admin nhập/đổi Developer ID.
-			if ($developer_id !== '' && $changed) {
-				$this->developer_affiliate($developer_id);
-			}
-		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
-	}
-	public function developer_affiliate($developer_id)
-	{
-		$url  = 'https://vietqr.devgioi.com/api/claim';
-		preg_match('/(http(|s)):\/\/(.*?)\//si',  WC()->api_request_url(''), $output);
-		$body = array(
-			"developer_id" => $developer_id,
-			"domain" => $output[0],
-		);
-		$args = array(
-			'body'        => json_encode($body),
-			'headers' => array(
-				"content-type" => "application/json"
-			),
-			'timeout'     => 20,
-		);
-		$response = wp_remote_post($url, $args);
-		if (is_wp_error($response)) {
-			return null;
-		}
-		if ($response['response']['code'] == 200 || $response['response']['code'] == 201) {
-			$body     = wp_remote_retrieve_body($response);
-			return $body;
-		}
-		return null;
 	}
 	public function clean_prefix($string)
 	{
@@ -363,7 +359,24 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 		if ($this->instructions) {
 			echo wp_kses_post(wpautop(wptexturize(wp_kses_post($this->instructions))));
 		}
-		$this->bank_details($order_id, false);
+		$this->bank_details($order_id, 'thankyou');
+	}
+
+	/**
+	 * QR ở trang Tài khoản → Xem đơn hàng, cho đơn VietQR chưa thanh toán (khách quay lại trả sau).
+	 *
+	 * @param int $order_id Order ID.
+	 */
+	public function view_order_page($order_id)
+	{
+		$order = wc_get_order($order_id);
+		if (!$order || 'vietqr' !== $order->get_payment_method()) {
+			return;
+		}
+		if (!$order->has_status(apply_filters('vietqr_view_order_statuses', array('on-hold', 'pending')))) {
+			return;
+		}
+		$this->bank_details($order_id, 'view_order');
 	}
 
 	/**
@@ -376,20 +389,27 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 	public function email_instructions($order, $sent_to_admin, $plain_text = false)
 	{
 		if (!$sent_to_admin && 'vietqr' === $order->get_payment_method() && $order->has_status('on-hold')) {
+			if ($plain_text) {
+				if ($this->instructions) {
+					echo esc_html(wp_strip_all_tags(wptexturize($this->instructions))) . PHP_EOL . PHP_EOL;
+				}
+				$this->bank_details($order->get_id(), 'email_plain');
+				return;
+			}
 			if ($this->instructions) {
 				echo wp_kses_post(wpautop(wptexturize($this->instructions)) . PHP_EOL);
 			}
-			$this->bank_details($order->get_id(), true);
+			$this->bank_details($order->get_id(), 'email');
 		}
 	}
 
 	/**
-	 * Hiển thị mã QR và thông tin chuyển khoản (template templates/bank-details.php).
+	 * Hiển thị mã QR và thông tin chuyển khoản.
 	 *
-	 * @param int  $order_id      Order ID.
-	 * @param bool $is_sent_email Đang render trong email.
+	 * @param int    $order_id Order ID.
+	 * @param string $context  thankyou | view_order | email | email_plain.
 	 */
-	private function bank_details($order_id = '', $is_sent_email = false)
+	private function bank_details($order_id = '', $context = 'thankyou')
 	{
 		if (empty($this->account_details)) {
 			return;
@@ -399,41 +419,9 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 			return;
 		}
 
+		$is_sent_email = in_array($context, array('email', 'email_plain'), true);
 		foreach ($this->account_details as $vietqr_account) {
-			$vietqr_account = (object) $vietqr_account;
-
-			// VietQR account fields shown on the thanks page and in emails.
-			$account_fields = apply_filters(
-				'woocommerce_vietqr_account_fields',
-				array(
-					'bank_name'      => array(
-						'label' => __('Bank', 'vietqr'),
-						'value' => $vietqr_account->bank_name,
-					),
-					'bank_id'      => array(
-						'label' => __('Bank Id', 'vietqr'),
-						'value' => $vietqr_account->bank_id,
-					),
-					'account_number' => array(
-						'label' => __('Account number', 'vietqr'),
-						'value' => $vietqr_account->account_number,
-					),
-					'account_name' => array(
-						'label' => __('Account name', 'vietqr'),
-						'value' => $vietqr_account->account_name,
-					),
-					'amount'            => array(
-						'label' => __('Amount', 'vietqr'),
-						//QR chỉ nhận số nguyên VND.
-						'value' => (int) round((float) $order->get_total()),
-					),
-					'memo'            => array(
-						'label' => __('Memo', 'vietqr'),
-						'value' =>  $this->prefix . $order_id,
-					),
-				),
-				$order_id
-			);
+			$account_fields = $this->get_account_fields($order, (object) $vietqr_account);
 
 			$has_details = false;
 			foreach ($account_fields as $field) {
@@ -447,22 +435,131 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 			}
 
 			$data = $this->get_qrcode_vietqr_img_url($account_fields);
-
-			wc_get_template(
-				'bank-details.php',
-				array(
-					'order'          => $order,
-					'account_fields' => $account_fields,
-					'qrcode_url'     => $data['img_url'],
-					'qrcode_page'    => $data['pay_url'],
-					'is_sent_email'  => $is_sent_email,
-					//hiển thị nút tải trên điện thoại và ko phải email
-					'show_download'  => !$is_sent_email && wp_is_mobile(),
-				),
-				'vietqr/',
-				dirname(__DIR__) . '/templates/'
+			$args = array(
+				'order'          => $order,
+				'account_fields' => $account_fields,
+				// email không hiển thị SVG
+				'qrcode_url'     => $is_sent_email ? $data['email_url'] : $data['img_url'],
+				'qrcode_png'     => $data['png_url'],
+				'qrcode_page'    => $data['pay_url'],
+				'context'        => $context,
+				'is_sent_email'  => $is_sent_email,
+				//nút mở app ngân hàng theo nền tảng (JS chỉ hiện trên điện thoại)
+				'deeplink_apps'  => $is_sent_email ? array() : $this->get_deeplink_links($order, $account_fields),
 			);
+
+			$templates = array(
+				'email'       => 'emails/bank-details.php',
+				'email_plain' => 'plain/bank-details.php',
+			);
+			if (!$is_sent_email) {
+				self::enqueue_assets(true);
+			}
+			wc_get_template($templates[$context] ?? 'bank-details.php', $args, 'vietqr/', dirname(__DIR__) . '/templates/');
 		}
+	}
+
+	/**
+	 * Link mở app ngân hàng (deeplink dl.vietqr.io) cho từng nền tảng, app tự điền thông tin lên trước.
+	 *
+	 * @return array array('android' => [...], 'ios' => [...]), mỗi app: id, name, logo, autofill, href.
+	 */
+	private function get_deeplink_links($order, $account_fields)
+	{
+		if ('yes' !== $this->get_option('deeplink', 'yes')) {
+			return array();
+		}
+		$bank_code = self::get_bank_code($account_fields['bank_id']['value']);
+		if ('' === $bank_code || empty($account_fields['account_number']['value'])) {
+			return array();
+		}
+
+		//Quy ước của dl.vietqr.io: ba giữ nguyên "@", mã ngân hàng viết thường, dấu cách thành "+",
+		//url để nguyên trừ khi có "&" (dl.vietqr.io sẽ cắt url tại "&").
+		$return_url = $order->get_checkout_order_received_url();
+		$encode = function ($value) {
+			return str_replace('%20', '+', rawurlencode((string) $value));
+		};
+		$query = 'am=' . $encode($account_fields['amount']['value'])
+			. '&tn=' . $encode($account_fields['memo']['value'])
+			. '&ba=' . $encode($account_fields['account_number']['value']) . '@' . $bank_code
+			. '&bn=' . $encode($account_fields['account_name']['value'])
+			. '&url=' . (preg_match('/[&#\s]/', $return_url) ? rawurlencode($return_url) : $return_url);
+
+		$links = array();
+		foreach (array('android', 'ios') as $platform) {
+			$apps = self::get_deeplink_apps($platform);
+			usort($apps, function ($a, $b) {
+				$by_autofill = (int) !empty($b['autofill']) - (int) !empty($a['autofill']);
+				return $by_autofill ?: (int) ($b['monthlyInstall'] ?? 0) - (int) ($a['monthlyInstall'] ?? 0);
+			});
+			$links[$platform] = array();
+			foreach ($apps as $app) {
+				if (empty($app['appId']) || !preg_match('/^[a-z0-9_-]+$/i', $app['appId'])) {
+					continue;
+				}
+				$links[$platform][] = array(
+					'id'       => $app['appId'],
+					'name'     => $app['appName'] ?? $app['appId'],
+					'logo'     => $app['appLogo'] ?? '',
+					'autofill' => !empty($app['autofill']),
+					'href'     => 'https://dl.vietqr.io/pay?app=' . $app['appId'] . '&' . $query,
+				);
+			}
+		}
+		return apply_filters('vietqr_deeplink_apps', $links, $order);
+	}
+
+	/**
+	 * Mã ngân hàng viết thường (vd. vcb) theo BIN, dùng cho tham số ba của deeplink.
+	 */
+	public static function get_bank_code($bin)
+	{
+		$banks = self::get_banks();
+		foreach ($banks['data'] as $bank) {
+			if ((string) ($bank['bin'] ?? '') === (string) $bin && !empty($bank['code'])) {
+				return strtolower(preg_replace('/[^a-z0-9]/i', '', $bank['code']));
+			}
+		}
+		return '';
+	}
+
+	/**
+	 * Các trường thông tin chuyển khoản của một đơn hàng (filter woocommerce_vietqr_account_fields).
+	 */
+	private function get_account_fields($order, $vietqr_account)
+	{
+		return apply_filters(
+			'woocommerce_vietqr_account_fields',
+			array(
+				'bank_name'      => array(
+					'label' => __('Bank', 'vietqr'),
+					'value' => $vietqr_account->bank_name,
+				),
+				'bank_id'      => array(
+					'label' => __('Bank Id', 'vietqr'),
+					'value' => $vietqr_account->bank_id,
+				),
+				'account_number' => array(
+					'label' => __('Account number', 'vietqr'),
+					'value' => $vietqr_account->account_number,
+				),
+				'account_name' => array(
+					'label' => __('Account name', 'vietqr'),
+					'value' => $vietqr_account->account_name,
+				),
+				'amount'            => array(
+					'label' => __('Amount', 'vietqr'),
+					//QR chỉ nhận số nguyên VND.
+					'value' => (int) round((float) $order->get_total()),
+				),
+				'memo'            => array(
+					'label' => __('Memo', 'vietqr'),
+					'value' =>  $this->prefix . $order->get_id(),
+				),
+			),
+			$order->get_id()
+		);
 	}
 
 	/**
@@ -499,20 +596,25 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 		$acqId = rawurlencode($account_fields['bank_id']['value']);
 		$addInfo = $account_fields['memo']['value'];
 		$amount = $account_fields['amount']['value'];
-		$template = "compact";
+		$template = "payos";
 
-		$img_url = add_query_arg(
-			array_map('rawurlencode', array(
-				'amount'      => $amount,
-				'addInfo'     => $addInfo,
-				'accountName' => $account_fields['account_name']['value'],
-			)),
-			"https://img.vietqr.io/image/{$acqId}-{$accountNo}-{$template}.jpg"
-		);
+		$query = array_map('rawurlencode', array(
+			'amount'      => $amount,
+			'addInfo'     => $addInfo,
+			'accountName' => $account_fields['account_name']['value'],
+		));
+		$base = "https://img.vietqr.io/image/{$acqId}-{$accountNo}-{$template}";
+		// Trang web hiển thị SVG. PNG chỉ dùng khi tải về và trong email (Gmail/Outlook không hiển thị SVG);
+		// img.vietqr.io chỉ trả PNG khi có tham số goal cho biết mục đích sử dụng.
+		$img_url = add_query_arg($query, $base . '.svg');
+		$png_url = add_query_arg($query + array('goal' => 'download'), $base . '.png');
+		$email_url = add_query_arg($query + array('goal' => 'email'), $base . '.png');
 		$pay_url = "https://api.vietqr.io/{$acqId}/{$accountNo}/" . rawurlencode($amount) . '/' . rawurlencode($addInfo);
 
 		return array(
 			"img_url" => $img_url,
+			"png_url" => $png_url,
+			"email_url" => $email_url,
 			"pay_url" => $pay_url,
 		);
 	}
@@ -522,20 +624,16 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 		$des = apply_filters('woocommerce_gateway_description', $this->description, $this->id);
 
 		if ($this->id == "vietqr") {
-			self::enqueue_checkout_style();
+			self::enqueue_assets();
 			$featured = self::get_featured_banks();
-			$des .= "<div class='vietqr-row'>";
+			$des .= '<span class="vietqr-banks">';
 			foreach ($featured['banks'] as $bank) {
-				$des .= "<div class='list-bank'><div class='list-bank-box'>";
-				$des .= '<img src="' . esc_url($bank['logo']) . '" alt="' . esc_attr($bank['shortName'] ?? '') . '" title="' . esc_attr($bank['shortName'] ?? '') . '">';
-				$des .= '</div></div>';
+				$des .= '<span class="vietqr-banks__item"><img class="vietqr-banks__logo" src="' . esc_url($bank['logo']) . '" alt="' . esc_attr($bank['shortName'] ?? '') . '" title="' . esc_attr($bank['shortName'] ?? '') . '" loading="lazy" decoding="async"></span>';
 			}
 			if ($featured['others_count'] > 0) {
-				$des .= "<div class='list-bank list-bank-more'><div class='list-bank-box' title='" . esc_attr($featured['others_names']) . "'>";
-				$des .= esc_html($featured['others_label']);
-				$des .= '</div></div>';
+				$des .= '<span class="vietqr-banks__item vietqr-banks__item--more" title="' . esc_attr($featured['others_names']) . '">' . esc_html($featured['others_label']) . '</span>';
 			}
-			$des .= "</div>";
+			$des .= '</span>';
 		}
 		return $des;
 	}
@@ -579,9 +677,50 @@ class WC_Gateway_VietQR extends WC_Payment_Gateway
 		);
 	}
 
-	public static function enqueue_checkout_style()
+	/**
+	 * CSS dùng chung cho checkout và trang thanh toán; JS chỉ cần ở trang thanh toán (QR, sao chép, mở app).
+	 */
+	public static function enqueue_assets($with_script = false)
 	{
-		wp_enqueue_style('vietqr-custome-styles', plugins_url('../assets/css/custom.css', __FILE__), array(), WC_GATEWAY_VIETQR_VERSION);
+		wp_enqueue_style('vietqr', plugins_url('../assets/css/vietqr.css', __FILE__), array(), WC_GATEWAY_VIETQR_VERSION);
+		static $theme_css_added = false;
+		if (!$theme_css_added && !wp_style_is('vietqr', 'done')) {
+			$theme_css_added = true;
+			$theme_css = self::theme_button_css();
+			if ($theme_css) {
+				wp_add_inline_style('vietqr', $theme_css);
+			}
+		}
+		if ($with_script) {
+			wp_enqueue_script('vietqr', plugins_url('../assets/js/vietqr.js', __FILE__), array(), WC_GATEWAY_VIETQR_VERSION, true);
+		}
+	}
+
+	/**
+	 * Màu và bo góc nút lấy từ Global Styles của theme khối (Giao diện > Trình chỉnh sửa > Kiểu > Nút).
+	 * Giữ nguyên dạng var(--wp--preset--...) để đổi màu trong Site Editor là nút của plugin đổi theo.
+	 * Theme cổ điển không có Global Styles cho nút: JS sẽ đo nút .button của theme.
+	 */
+	private static function theme_button_css()
+	{
+		if (!function_exists('wp_is_block_theme') || !wp_is_block_theme() || !function_exists('wp_get_global_styles')) {
+			return '';
+		}
+		$button = wp_get_global_styles(array('elements', 'button'));
+		$vars = array(
+			'--vietqr-accent'          => $button['color']['background'] ?? '',
+			'--vietqr-accent-contrast' => $button['color']['text'] ?? '',
+			'--vietqr-accent-hover'    => $button[':hover']['color']['background'] ?? '',
+			'--vietqr-button-radius'   => is_string($button['border']['radius'] ?? null) ? $button['border']['radius'] : '',
+		);
+		$css = '';
+		foreach ($vars as $name => $value) {
+			// chỉ nhận giá trị CSS an toàn (màu, var(), color-mix(), px...)
+			if (is_string($value) && '' !== $value && preg_match('/^[a-zA-Z0-9#%(),.\s_-]+$/', $value)) {
+				$css .= $name . ':' . $value . ';';
+			}
+		}
+		return $css ? '.vietqr{--vietqr-theme-colors:1;' . $css . '}' : '';
 	}
 
 	/**

@@ -60,7 +60,7 @@ final class WC_VietQR_Blocks_Support extends AbstractPaymentMethodType {
 			'wc-vietqr-blocks-integration',
 			'vietqr'
 		);
-		WC_Gateway_VietQR::enqueue_checkout_style();
+		WC_Gateway_VietQR::enqueue_assets();
 		return [ 'wc-vietqr-blocks-integration' ];
 	}
 
