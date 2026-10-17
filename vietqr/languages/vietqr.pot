@@ -1,102 +1,185 @@
-# Copyright (C) 2022 Casso Team
-# This file is distributed under the GNU General Public License v3.0.
+# Copyright (C) 2026 Casso Team
+# This file is distributed under the GPLv3.
 msgid ""
 msgstr ""
-"Project-Id-Version: VietQR 2.1\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/vietqr-woo\n"
+"Project-Id-Version: VietQR 3.7.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/vietqr\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2022-06-16T16:14:02+00:00\n"
+"POT-Creation-Date: 2026-10-17T18:57:19+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.6.0\n"
+"X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: vietqr\n"
 
 #. Plugin Name of the plugin
+#: wc-gateway-vietqr.php
 msgid "VietQR"
 msgstr ""
 
 #. Plugin URI of the plugin
+#: wc-gateway-vietqr.php
 msgid "https://casso.vn/plugin-vietqr-woocommerce/"
 msgstr ""
 
 #. Description of the plugin
-msgid "Quick bank transfer by generating QR codes that are accepted by 37 Vietnam banking App: Vietcombank, Vietinbank, BIDV, ACB, VPBank, MBank, TPBank, Digimi, MSB ... Developed for WooCommerce."
+#: wc-gateway-vietqr.php
+msgid "Bank transfer by VietQR code for WooCommerce, accepted by most Vietnamese banking apps and e-wallets: Vietcombank, VietinBank, BIDV, Agribank, Techcombank, MBBank, MoMo, ZaloPay..."
 msgstr ""
 
 #. Author of the plugin
+#: wc-gateway-vietqr.php
 msgid "Casso Team"
 msgstr ""
 
 #. Author URI of the plugin
+#: wc-gateway-vietqr.php
 msgid "https://casso.vn"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:40
+#: classes/class-wc-gateway-vietqr.php:48
 msgid "Direct bank transfer (Scan VietQR)"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:41
+#: classes/class-wc-gateway-vietqr.php:49
 msgid "Take payments by scanning QR code with Vietnamese banking App. Supported by most major banks in Vietnam"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:145
+#: classes/class-wc-gateway-vietqr.php:171
+msgid "Enable/Disable"
+msgstr ""
+
+#: classes/class-wc-gateway-vietqr.php:173
+msgid "Enable bank transfer"
+msgstr ""
+
+#: classes/class-wc-gateway-vietqr.php:177
+msgid "Title"
+msgstr ""
+
+#: classes/class-wc-gateway-vietqr.php:179
+msgid "This controls the title which the user sees during checkout."
+msgstr ""
+
+#: classes/class-wc-gateway-vietqr.php:180
 msgid "Scan the bank transfer code"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:152
+#: classes/class-wc-gateway-vietqr.php:184
+msgid "Description"
+msgstr ""
+
+#: classes/class-wc-gateway-vietqr.php:186
+msgid "Payment method description that the customer will see on your checkout."
+msgstr ""
+
+#: classes/class-wc-gateway-vietqr.php:187
 msgid "Transfer payments using the banking App to scan the code. Supported by almost Vietnamese banking apps"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:166
+#: classes/class-wc-gateway-vietqr.php:191
+msgid "Instructions"
+msgstr ""
+
+#: classes/class-wc-gateway-vietqr.php:193
+msgid "Instructions that will be added to the thank you page and emails."
+msgstr ""
+
+#: classes/class-wc-gateway-vietqr.php:201
 msgid "Prefix"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:168
+#: classes/class-wc-gateway-vietqr.php:203
 msgid "Prefix used to combine with order code to create money transfer content, Set rules: no spaces, no more than 15 characters and no special characters. Violations will be deleted"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:212
+#: classes/class-wc-gateway-vietqr.php:242
 msgid "Bank name"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:233
+#: classes/class-wc-gateway-vietqr.php:265
+#: classes/class-wc-gateway-vietqr.php:438
+#: templates/bank-details.php:76
 msgid "Account name"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:241
-#: classes/class-wc-gateway-vietqr.php:548
+#: classes/class-wc-gateway-vietqr.php:273
+#: classes/class-wc-gateway-vietqr.php:434
+#: templates/bank-details.php:80
 msgid "Account number"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:250
+#: classes/class-wc-gateway-vietqr.php:282
 msgid "Developer ID"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:422
-#: classes/class-wc-gateway-vietqr.php:568
-msgid "Amount"
+#: classes/class-wc-gateway-vietqr.php:287
+msgid "We will review and send you a gift via MoMo if you are eligible"
 msgstr ""
 
 #: classes/class-wc-gateway-vietqr.php:426
-#: classes/class-wc-gateway-vietqr.php:580
+#: templates/bank-details.php:84
+msgid "Bank"
+msgstr ""
+
+#: classes/class-wc-gateway-vietqr.php:430
+msgid "Bank Id"
+msgstr ""
+
+#: classes/class-wc-gateway-vietqr.php:442
+#: templates/bank-details.php:88
+msgid "Amount"
+msgstr ""
+
+#: classes/class-wc-gateway-vietqr.php:447
+#: templates/bank-details.php:92
 msgid "Memo"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:472
+#: classes/class-wc-gateway-vietqr.php:495
+msgid "Awaiting payment"
+msgstr ""
+
+#. translators: %d: số ngân hàng và ví điện tử còn lại
+#: classes/class-wc-gateway-vietqr.php:591
+#, php-format
+msgid "+%d other bank & e-wallet"
+msgid_plural "+%d other banks & e-wallets"
+msgstr[0] ""
+msgstr[1] ""
+
+#: templates/bank-details.php:21
 msgid "Bank transfer QR code"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:510
+#: templates/bank-details.php:24
+msgid "VietQR QR Image"
+msgstr ""
+
+#: templates/bank-details.php:29
+msgid "Download QR Code"
+msgstr ""
+
+#: templates/bank-details.php:53
+msgid "SAVE QR IMAGE"
+msgstr ""
+
+#: templates/bank-details.php:54
 msgid "Then open the banking App and scan the transfer QR"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:529
+#: templates/bank-details.php:64
+msgid "Our bank details"
+msgstr ""
+
+#. translators: %s: nội dung chuyển khoản
+#: templates/bank-details.php:69
+#, php-format
 msgid "Please transfer the correct content <b>%s</b> for we can confirm the payment"
 msgstr ""
 
-#: classes/class-wc-gateway-vietqr.php:556
-msgid "Bank"
+#: wc-gateway-vietqr.php:81
+msgid "Settings"
 msgstr ""

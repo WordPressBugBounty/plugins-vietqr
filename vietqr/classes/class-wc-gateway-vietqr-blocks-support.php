@@ -27,10 +27,8 @@ final class WC_VietQR_Blocks_Support extends AbstractPaymentMethodType {
 	 * @return boolean
 	 */
 	public function is_active() {
-		$payment_gateways_class   = WC()->payment_gateways();
-		$payment_gateways         = $payment_gateways_class->payment_gateways();
-
-		return $payment_gateways['vietqr']->is_available();
+		$gateway = $this->get_gateway();
+		return $gateway ? $gateway->is_available() : false;
 	}
 
 	/**
@@ -39,7 +37,7 @@ final class WC_VietQR_Blocks_Support extends AbstractPaymentMethodType {
 	 * @return array
 	 */
 	public function get_payment_method_script_handles() {
-		$asset_path   = WC_GATEWAY_VIETQR_PATH . '/assets/js/index.asset.php';
+		$asset_path   = WC_GATEWAY_VIETQR_PATH . '/assets/blocks/index.asset.php';
 		$version      = WC_GATEWAY_VIETQR_VERSION;
 		$dependencies = [];
 		if ( file_exists( $asset_path ) ) {
@@ -53,15 +51,16 @@ final class WC_VietQR_Blocks_Support extends AbstractPaymentMethodType {
 		}
 		wp_register_script(
 			'wc-vietqr-blocks-integration',
-			WC_GATEWAY_VIETQR_URL . '/assets/js/index.js',
+			WC_GATEWAY_VIETQR_URL . '/assets/blocks/index.js',
 			$dependencies,
 			$version,
 			true
 		);
 		wp_set_script_translations(
 			'wc-vietqr-blocks-integration',
-			'woocommerce-gateway-vietqr'
+			'vietqr'
 		);
+		WC_Gateway_VietQR::enqueue_checkout_style();
 		return [ 'wc-vietqr-blocks-integration' ];
 	}
 
@@ -71,12 +70,22 @@ final class WC_VietQR_Blocks_Support extends AbstractPaymentMethodType {
 	 * @return array
 	 */
 	public function get_payment_method_data() {
+		$featured = WC_Gateway_VietQR::get_featured_banks();
 		return [
-			'title'       => $this->get_setting( 'title' ),
-			'description' => $this->get_setting( 'description' ),
-			'supports'    => $this->get_supported_features(),
-			'logo_url'    => WC_GATEWAY_VIETQR_URL . '/assets/img/vietqr.png',
-			'vietqr_banks' => $this->get_setting('vietqr_banks')["data"],
+			'title'        => $this->get_setting( 'title' ),
+			'description'  => $this->get_setting( 'description' ),
+			'supports'     => $this->get_supported_features(),
+			'logo_url'     => WC_GATEWAY_VIETQR_URL . '/assets/img/vietqr.png',
+			'banks'        => array_map( function ( $bank ) {
+				return [
+					'bin'       => $bank['bin'],
+					'shortName' => $bank['shortName'] ?? '',
+					'logo'      => $bank['logo'],
+				];
+			}, $featured['banks'] ),
+			'others_count' => $featured['others_count'],
+			'others_label' => $featured['others_label'],
+			'others_names' => $featured['others_names'],
 		];
 	}
 
@@ -86,7 +95,12 @@ final class WC_VietQR_Blocks_Support extends AbstractPaymentMethodType {
 	 * @return string[]
 	 */
 	public function get_supported_features() {
-		$payment_gateways = WC()->payment_gateways->payment_gateways();
-		return $payment_gateways['vietqr']->supports;
+		$gateway = $this->get_gateway();
+		return $gateway ? $gateway->supports : [];
+	}
+
+	private function get_gateway() {
+		$payment_gateways = WC()->payment_gateways()->payment_gateways();
+		return $payment_gateways['vietqr'] ?? null;
 	}
 }
