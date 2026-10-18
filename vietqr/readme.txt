@@ -1,10 +1,10 @@
 === VietQR ===
-Contributors: thichvivu, huuhao1999, diepmagik
-Tags: vietqr, deeplink, qr code, bank transfer, woocommerce
+Contributors: diepmagik, locbt, hungndcasso
+Tags: vietqr, woocommerce, payment gateway, cong thanh toan, deeplink
 Requires at least: 6.2
 Tested up to: 7.1
-Stable tag: 4.0.3
-Version: 4.0.3
+Stable tag: 4.0.6
+Version: 4.0.6
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -90,7 +90,7 @@ Trên máy tính, hoặc với app ngân hàng khác, khách chỉ cần quét m
 
 **Dành cho lập trình viên**
 
-* Ghi đè template `templates/bank-details.php`, `templates/emails/bank-details.php`, `templates/plain/bank-details.php` tại `yourtheme/vietqr/`
+* Ghi đè template `shared/templates/bank-details.php`, `shared/templates/emails/bank-details.php`, `shared/templates/plain/bank-details.php` tại `yourtheme/vietqr/`
 * Filter: `vietqr_featured_bank_bins`, `vietqr_deeplink_apps`, `vietqr_deeplink_visible_apps`, `vietqr_supported_currencies`, `woocommerce_vietqr_account_fields`
 * Chỉnh màu qua các biến CSS `--vietqr-*`
 
@@ -145,6 +145,18 @@ Trên điện thoại, trang thanh toán hiển thị các app ngân hàng hỗ 
 7. Toàn bộ email đơn hàng gửi cho khách
 
 == Changelog ==
+
+= 4.0.6 =
+* Cập nhật danh sách người đóng góp
+* Dọn cảnh báo của Plugin Check
+
+= 4.0.5 =
+* Giao diện thanh toán (mã QR, nút mở app ngân hàng, email) dùng chung mã nguồn với plugin Casso Flow, giao diện không đổi
+* Template ghi đè chuyển sang thư mục shared/templates/ trong plugin, theme vẫn ghi đè tại yourtheme/vietqr/ như cũ
+
+= 4.0.4 =
+* Tên mặc định mới "Chuyển khoản ngân hàng", đồng nhất với Casso Flow và payOS. Cửa hàng đang dùng tên mặc định cũ được tự cập nhật, tên tự đặt giữ nguyên
+* Kèm mã nguồn JavaScript của Checkout Block (thư mục src/)
 
 = 4.0.3 =
 * Sửa bảng so sánh bị vỡ trên trang plugin (WordPress.org không hỗ trợ bảng)

@@ -11,8 +11,8 @@ msgstr ""
 "PO-Revision-Date: 2022-06-16 23:15+0700\n"
 "Language: vi\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.1\n"
 "X-Domain: vietqr\n"
+"X-Generator: Poedit 3.1\n"
 "X-Loco-Version: 2.5.2; wp-5.5.3\n"
 
 #. Plugin Name of the plugin
@@ -35,80 +35,76 @@ msgstr "Casso Team"
 msgid "https://casso.vn"
 msgstr "https://casso.vn"
 
-#: classes/class-wc-gateway-vietqr.php:41
+#: classes/class-wc-gateway-vietqr.php:34
 msgid "Direct bank transfer (Scan VietQR)"
 msgstr "Chuyển khoản ngân hàng (Quét mã VietQR)"
 
-#: classes/class-wc-gateway-vietqr.php:42
+#: classes/class-wc-gateway-vietqr.php:35
 msgid "Take payments by scanning QR code with Vietnamese banking App. Supported by most major banks in Vietnam"
 msgstr "Thực hiện thanh toán bằng cách quét mã QR bằng App ngân hàng. Hỗ trợ bởi hầu hết các ngân hàng lớn Việt Nam"
 
-#: classes/class-wc-gateway-vietqr.php:200
-msgid "Scan the bank transfer code"
-msgstr "Chuyển khoản ngân hàng (Quét mã QR)"
-
-#: classes/class-wc-gateway-vietqr.php:207
+#: classes/class-wc-gateway-vietqr.php:133
 msgid "Transfer payments using the banking App to scan the code. Supported by almost Vietnamese banking apps"
 msgstr "Chuyển khoản thanh toán bằng cách dùng App ngân hàng quét mã QR (VietQR). Tiện lợi và miễn phí. Hầu hết App ngân hàng Việt Nam đã hỗ trợ VietQR"
 
-#: classes/class-wc-gateway-vietqr.php:229
+#: classes/class-wc-gateway-vietqr.php:155
 msgid "Prefix"
 msgstr "Tiền tố"
 
-#: classes/class-wc-gateway-vietqr.php:231
+#: classes/class-wc-gateway-vietqr.php:157
 msgid "Prefix used to combine with order code to create money transfer content, Set rules: no spaces, no more than 15 characters and no special characters. Violations will be deleted"
 msgstr "Tiền tố dùng để kết hợp với mã đơn hàng tạo nội dung chuyển tiền, Đặt quy tắc: không dấu cách, không quá 10 ký tự và không ký tự đặc biệt. Vi phạm sẽ bị xóa"
 
-#: classes/class-wc-gateway-vietqr.php:268
+#: classes/class-wc-gateway-vietqr.php:194
 msgid "Bank name"
 msgstr "Ngân Hàng"
 
-#: classes/class-wc-gateway-vietqr.php:291
-#: classes/class-wc-gateway-vietqr.php:548
-#: templates/bank-details.php:43
-#: templates/emails/bank-details.php:22
-#: templates/plain/bank-details.php:23
+#: classes/class-wc-gateway-vietqr.php:217
+#: classes/class-wc-gateway-vietqr.php:398
+#: shared/templates/bank-details.php:66
+#: shared/templates/emails/bank-details.php:22
+#: shared/templates/plain/bank-details.php:23
 msgid "Account name"
 msgstr "Tên tài khoản"
 
-#: classes/class-wc-gateway-vietqr.php:299
-#: classes/class-wc-gateway-vietqr.php:544
-#: templates/bank-details.php:44
-#: templates/emails/bank-details.php:23
-#: templates/plain/bank-details.php:24
+#: classes/class-wc-gateway-vietqr.php:225
+#: classes/class-wc-gateway-vietqr.php:394
+#: shared/templates/bank-details.php:67
+#: shared/templates/emails/bank-details.php:23
+#: shared/templates/plain/bank-details.php:24
 msgid "Account number"
 msgstr "Số tài khoản"
 
-#: classes/class-wc-gateway-vietqr.php:552
-#: templates/bank-details.php:45
-#: templates/emails/bank-details.php:24
-#: templates/plain/bank-details.php:26
+#: classes/class-wc-gateway-vietqr.php:402
+#: shared/templates/bank-details.php:68
+#: shared/templates/emails/bank-details.php:24
+#: shared/templates/plain/bank-details.php:26
 msgid "Amount"
 msgstr "Số tiền"
 
-#: classes/class-wc-gateway-vietqr.php:557
-#: templates/bank-details.php:46
-#: templates/emails/bank-details.php:25
-#: templates/plain/bank-details.php:27
+#: classes/class-wc-gateway-vietqr.php:407
+#: shared/templates/bank-details.php:69
+#: shared/templates/emails/bank-details.php:25
+#: shared/templates/plain/bank-details.php:27
 msgid "Memo"
 msgstr "Nội dung"
 
-#: templates/plain/bank-details.php:29
+#: shared/templates/plain/bank-details.php:29
 msgid "Bank transfer QR code"
 msgstr "Mã QR chuyển khoản ngân hàng"
 
 #. translators: %s: nội dung chuyển khoản
-#: templates/bank-details.php:79
-#: templates/emails/bank-details.php:55
-#: templates/plain/bank-details.php:21
+#: shared/templates/bank-details.php:111
+#: shared/templates/emails/bank-details.php:55
+#: shared/templates/plain/bank-details.php:21
 #, php-format
 msgid "Please transfer the correct content <b>%s</b> for we can confirm the payment"
 msgstr "Vui lòng chuyển đúng nội dung <b>%s</b> để chúng tôi có thể xác nhận thanh toán"
 
-#: classes/class-wc-gateway-vietqr.php:536
-#: templates/bank-details.php:42
-#: templates/emails/bank-details.php:21
-#: templates/plain/bank-details.php:25
+#: classes/class-wc-gateway-vietqr.php:386
+#: shared/templates/bank-details.php:65
+#: shared/templates/emails/bank-details.php:21
+#: shared/templates/plain/bank-details.php:25
 msgid "Bank"
 msgstr "Ngân hàng"
 
@@ -117,142 +113,180 @@ msgstr "Ngân hàng"
 msgid "Bank transfer by VietQR code for WooCommerce, accepted by most Vietnamese banking apps and e-wallets: Vietcombank, VietinBank, BIDV, Agribank, Techcombank, MBBank, MoMo, ZaloPay..."
 msgstr "Chuyển khoản ngân hàng bằng mã VietQR cho WooCommerce, được hầu hết ứng dụng ngân hàng và ví điện tử Việt Nam hỗ trợ: Vietcombank, VietinBank, BIDV, Agribank, Techcombank, MBBank, MoMo, ZaloPay..."
 
-#: classes/class-wc-gateway-vietqr.php:191
+#: classes/class-wc-gateway-vietqr.php:117
 msgid "Enable/Disable"
 msgstr "Bật/Tắt"
 
-#: classes/class-wc-gateway-vietqr.php:193
+#: classes/class-wc-gateway-vietqr.php:119
 msgid "Enable bank transfer"
 msgstr "Bật chuyển khoản ngân hàng"
 
-#: classes/class-wc-gateway-vietqr.php:197
+#: classes/class-wc-gateway-vietqr.php:123
 msgid "Title"
 msgstr "Tiêu đề"
 
-#: classes/class-wc-gateway-vietqr.php:199
+#: classes/class-wc-gateway-vietqr.php:125
 msgid "This controls the title which the user sees during checkout."
 msgstr "Tiêu đề khách hàng nhìn thấy khi thanh toán."
 
-#: classes/class-wc-gateway-vietqr.php:204
+#: classes/class-wc-gateway-vietqr.php:130
 msgid "Description"
 msgstr "Mô tả"
 
-#: classes/class-wc-gateway-vietqr.php:206
+#: classes/class-wc-gateway-vietqr.php:132
 msgid "Payment method description that the customer will see on your checkout."
 msgstr "Mô tả phương thức thanh toán khách hàng nhìn thấy khi thanh toán."
 
-#: classes/class-wc-gateway-vietqr.php:211
+#: classes/class-wc-gateway-vietqr.php:137
 msgid "Instructions"
 msgstr "Hướng dẫn"
 
-#: classes/class-wc-gateway-vietqr.php:213
+#: classes/class-wc-gateway-vietqr.php:139
 msgid "Instructions that will be added to the thank you page and emails."
 msgstr "Hướng dẫn hiển thị trên trang cảm ơn và trong email."
 
-#: classes/class-wc-gateway-vietqr.php:540
+#: classes/class-wc-gateway-vietqr.php:390
 msgid "Bank Id"
 msgstr "Mã ngân hàng"
 
-#: classes/class-wc-gateway-vietqr.php:576
+#: classes/class-wc-gateway-vietqr.php:426
 msgid "Awaiting payment"
 msgstr "Đang chờ thanh toán"
 
 #. translators: %d: số ngân hàng và ví điện tử còn lại
-#: classes/class-wc-gateway-vietqr.php:673
+#: shared/class-payment-box.php:190
 #, php-format
 msgid "+%d other bank & e-wallet"
 msgid_plural "+%d other banks & e-wallets"
 msgstr[0] "+%d ngân hàng & ví khác"
 
-#: templates/bank-details.php:150
-#: templates/emails/bank-details.php:34
+#: shared/templates/bank-details.php:193
+#: shared/templates/emails/bank-details.php:34
 msgid "VietQR QR Image"
 msgstr "Ảnh mã VietQR"
 
-#: templates/emails/bank-details.php:35
+#: shared/templates/emails/bank-details.php:35
 msgid "Download QR Code"
 msgstr "Tải mã QR"
 
-#: templates/plain/bank-details.php:18
+#: shared/templates/plain/bank-details.php:18
 msgid "Our bank details"
 msgstr "Thông tin chuyển khoản"
 
-#: wc-gateway-vietqr.php:96
+#: wc-gateway-vietqr.php:105
 msgid "Settings"
 msgstr "Thiết lập"
 
-#: templates/bank-details.php:50
+#: shared/templates/bank-details.php:73
 msgid "Copied"
 msgstr "Đã sao chép"
 
-#: templates/bank-details.php:28
+#: shared/templates/bank-details.php:51
 msgid "Copy"
 msgstr "Sao chép"
 
-#: wc-gateway-vietqr.php:43
+#: wc-gateway-vietqr.php:52
 msgid "VietQR requires WooCommerce to be installed and active."
 msgstr "VietQR cần cài đặt và kích hoạt WooCommerce."
 
-#: classes/class-wc-gateway-vietqr.php:221
+#: classes/class-wc-gateway-vietqr.php:147
 msgid "Bank app buttons"
 msgstr "Nút mở app ngân hàng"
 
-#: classes/class-wc-gateway-vietqr.php:223
+#: classes/class-wc-gateway-vietqr.php:149
 msgid "Show \"Open banking app\" buttons on mobile (VietQR deeplink)"
 msgstr "Hiện nút \"Mở app ngân hàng\" trên điện thoại (VietQR deeplink)"
 
-#: classes/class-wc-gateway-vietqr.php:224
+#: classes/class-wc-gateway-vietqr.php:150
 msgid "Customers on a phone can open their banking app with the account, amount and transfer memo already filled in."
 msgstr "Khách dùng điện thoại có thể mở app ngân hàng với số tài khoản, số tiền và nội dung chuyển khoản đã điền sẵn."
 
 #. translators: %s: tên trường, vd. Số tài khoản
-#: templates/bank-details.php:27
+#: shared/templates/bank-details.php:50
 #, php-format
 msgid "Copy %s"
 msgstr "Sao chép %s"
 
-#: templates/bank-details.php:54
-#: templates/emails/bank-details.php:31
+#: shared/templates/bank-details.php:86
+#: shared/templates/emails/bank-details.php:31
 msgid "Pay by bank transfer"
 msgstr "Thanh toán bằng chuyển khoản"
 
-#: templates/bank-details.php:56
+#: shared/templates/bank-details.php:88
 msgid "Amount to pay"
 msgstr "Số tiền cần thanh toán"
 
-#: templates/bank-details.php:110
+#: shared/templates/bank-details.php:153
 msgid "Open your banking app to pay"
 msgstr "Mở app ngân hàng để thanh toán"
 
-#: templates/bank-details.php:144
+#: shared/templates/bank-details.php:187
 msgid "or scan the QR code"
 msgstr "hoặc quét mã QR"
 
-#: templates/bank-details.php:151
-#: templates/emails/bank-details.php:32
+#: shared/templates/bank-details.php:194
+#: shared/templates/emails/bank-details.php:32
 msgid "Scan with any banking app or e-wallet"
 msgstr "Quét bằng app ngân hàng hoặc ví điện tử bất kỳ"
 
-#: templates/bank-details.php:154
+#: shared/templates/bank-details.php:197
 msgid "Save QR image"
 msgstr "Lưu ảnh QR"
 
-#: templates/bank-details.php:99
-#: templates/bank-details.php:141
+#: shared/templates/bank-details.php:142
+#: shared/templates/bank-details.php:184
 msgid "Auto-fill"
 msgstr "Tự động điền"
 
 #. translators: %d: số app ngân hàng còn lại
-#: templates/bank-details.php:126
+#: shared/templates/bank-details.php:169
 #, php-format
 msgid "Show %d more app"
 msgid_plural "Show %d more apps"
 msgstr[0] "Xem thêm %d app"
 
-#: templates/bank-details.php:142
+#: shared/templates/bank-details.php:185
 msgid "opens with the account, amount and memo filled in. Other apps: save the QR image, then scan it in the app."
 msgstr "mở app với số tài khoản, số tiền và nội dung đã điền sẵn. App khác: lưu ảnh QR rồi quét trong app."
 
-#: templates/bank-details.php:156
+#: shared/templates/bank-details.php:199
 msgid "Touch and hold the QR code, then choose \"Save image\"."
 msgstr "Nhấn giữ vào mã QR rồi chọn \"Lưu ảnh\"."
+
+#: src/blocks/index.js:66
+msgid "VietQR payment method"
+msgstr "Phương thức thanh toán VietQR"
+
+#: classes/class-wc-gateway-vietqr.php:126
+msgid "Bank transfer"
+msgstr "Chuyển khoản ngân hàng"
+
+#: shared/templates/bank-details.php:32
+msgid "Payment received"
+msgstr "Đã nhận thanh toán"
+
+#. translators: %s: số tiền
+#: shared/templates/bank-details.php:36
+#, php-format
+msgid "We have received your transfer of %s. Thank you!"
+msgstr "Chúng tôi đã nhận được %s bạn chuyển khoản. Cảm ơn bạn!"
+
+#: shared/templates/bank-details.php:79
+msgid "Checking for your transfer…"
+msgstr "Đang kiểm tra giao dịch của bạn…"
+
+#: shared/templates/bank-details.php:80
+msgid "Your transfer has not arrived yet. It can take a few minutes, this page keeps checking."
+msgstr "Chưa thấy giao dịch của bạn. Có thể mất vài phút, trang vẫn đang tiếp tục kiểm tra."
+
+#: shared/templates/bank-details.php:81
+msgid "Still waiting for your transfer. Reload this page to check again."
+msgstr "Vẫn đang chờ bạn chuyển khoản. Tải lại trang để kiểm tra lại."
+
+#: shared/templates/bank-details.php:118
+msgid "Waiting for your transfer. This page updates automatically once the payment is received."
+msgstr "Đang chờ bạn chuyển khoản. Trang sẽ tự cập nhật khi nhận được tiền."
+
+#: shared/templates/bank-details.php:121
+msgid "I have transferred"
+msgstr "Tôi đã chuyển khoản"

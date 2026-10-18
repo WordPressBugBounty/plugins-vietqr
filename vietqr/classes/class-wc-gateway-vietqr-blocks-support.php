@@ -72,7 +72,7 @@ final class WC_VietQR_Blocks_Support extends AbstractPaymentMethodType {
 	public function get_payment_method_data() {
 		$featured = WC_Gateway_VietQR::get_featured_banks();
 		return [
-			'title'        => $this->get_setting( 'title' ),
+			'title'        => ( $gateway = $this->get_gateway() ) ? $gateway->title : $this->get_setting( 'title' ),
 			'description'  => $this->get_setting( 'description' ),
 			'supports'     => $this->get_supported_features(),
 			'logo_url'     => WC_GATEWAY_VIETQR_URL . '/assets/img/vietqr.png',
